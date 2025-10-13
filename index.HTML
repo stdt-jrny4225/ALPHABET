@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Alphabet Book + Categories</title>
+  <style>
+    :root{
+      --book-width:960px;
+      --accent:#2f6fa6;
+      --muted:#67727a;
+      --bg:#f0f8ff;
+      --card-bg:#fffaf6;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:24px;
+      font-family: "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+      background:var(--bg);
+      color:#222;
+      display:flex;
+      justify-content:center;
+    }
+
+    .book{
+      width:100%;
+      max-width:var(--book-width);
+      background:white;
+      border-radius:12px;
+      border:5px solid var(--accent);
+      box-shadow:0 14px 40px rgba(31,49,63,0.18);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .book-header{
+      background:linear-gradient(90deg,var(--accent),#3d83b8);
+      color:#fff;
+      padding:14px 18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .book-header .title{font-weight:700; font-size:1.15rem;}
+    .book-header .sub{font-size:0.95rem; opacity:0.95}
+
+    .page-wrap{
+      position:relative;
+      min-height:660px;
+      padding:26px;
+      background: linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+    }
+
+    .page{
+      width:100%;
+      height:100%;
+      background:var(--card-bg);
+      border:2px solid #e0e6eb;
+      border-radius:8px;
+      padding:20px;
+      box-shadow:0 6px 18px rgba(12,24,36,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+      transform-origin:left center;
+      backface-visibility:hidden;
+      position:absolute;
+      left:0;
+      top:0;
+      opacity:0;
+      pointer-events:none;
+    }
+    .page.active{
+      opacity:1;
+      pointer-events:auto;
+      z-index:2;
+    }
+
+    .page.enter{ animation:openIn .55s ease forwards; }
+    .page.leave{ animation:openOut .45s ease forwards; }
+
+    @keyframes openIn{
+      0%{ transform: perspective(1000px) rotateY(90deg) translateX(30px); opacity:0; }
+      60%{ transform: perspective(1000px) rotateY(-8deg) translateX(-6px); opacity:1; }
+      100%{ transform: perspective(1000px) rotateY(0deg) translateX(0); opacity:1; }
+    }
+    @keyframes openOut{
+      0%{ transform: perspective(1000px) rotateY(0deg); opacity:1; }
+      100%{ transform: perspective(1000px) rotateY(-80deg) translateX(-40px); opacity:0; }
+    }
+
+    .page-heading{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .page-heading h2{margin:0;font-size:1.25rem;color:var(--accent)}
+    .page-footer{
+      position:absolute;
+      left:20px;
+      right:20px;
+      bottom:18px;
+      text-align:center;
+      color:var(--muted);
+      font-size:0.98rem;
+      border-top:1px solid rgba(0,0,0,0.04);
+      padding-top:10px;
+      background:linear-gradient(180deg, transparent, rgba(255,255,255,0.6));
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:20px 28px;
+      align-items:start;
+      margin-bottom:58px;
+    }
+
+    .card{
+      background:#fff;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.06);
+      padding:18px;
+      text-align:center;
+      box-shadow:0 6px 16px rgba(24,38,53,0.06);
+      transition:transform .25s ease, box-shadow .25s ease;
+    }
+    .card:hover{ transform:translateY(-6px); box-shadow:0 18px 36px rgba(24,38,53,0.09); }
+
+    .letter{
+      font-size:2.2rem;
+      color:var(--accent);
+      font-weight:700;
+      margin-bottom:10px;
+    }
+
+    .illustration{
+      width:100%;
+      height:140px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:6rem;
+      margin-bottom:12px;
+      background:linear-gradient(180deg, rgba(47,111,166,0.03), rgba(47,111,166,0.01));
+      border-radius:8px;
+    }
+
+    .word{
+      font-size:1.1rem;
+      color:#2b3b43;
+      font-weight:600;
+      margin:0;
+    }
+
+    .cover {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      height:100%;
+      padding:40px;
+      text-align:center;
+    }
+    .cover h1{
+      font-size:2.6rem;
+      margin:6px 0;
+      color:var(--accent);
+    }
+    .cover p{ font-size:1.05rem; color:var(--muted); max-width:640px }
+
+    .controls{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 18px;
+      background:linear-gradient(180deg,#eef7ff,#f5fbff);
+      border-top:1px solid rgba(0,0,0,0.04);
+      gap:12px;
+    }
+
+    .btn{
+      background:var(--accent);
+      color:white;
+      border:none;
+      padding:10px 14px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition:transform .15s ease, background .15s ease;
+    }
+    .btn:active{ transform:translateY(1px); }
+    .btn[disabled]{ opacity:.45; cursor:default; transform:none; }
+
+    .page-indicator{ color:var(--muted); font-weight:600 }
+
+    @media (max-width:720px){
+      .book{ border-width:3px; max-width:92vw; }
+      .page-wrap{ padding:16px; min-height:620px; }
+      .illustration{ height:110px; font-size:4.6rem; }
+      .cards{ gap:14px; grid-template-columns:repeat(1,1fr); }
+      .cover h1{ font-size:2rem }
+    }
+
+    @media print{
+      body{ background:white; }
+      .controls,.book-header{ display:none }
+      .book{ box-shadow:none; border:none; max-width:100% }
+      .page-wrap{ padding:8px }
+    }
+  </style>
+</head>
+<body>
+  <div class="book" role="region" aria-label="Alphabet and categories book">
+    <div class="book-header">
+      <div class="title">📘 English Alphabets & Categories</div>
+      <div class="sub">Letters, Fruits, Vegetables, Animals, Birds, Flowers</div>
+    </div>
+
+    <div class="page-wrap" id="pageWrap">
+      <!-- Cover Page -->
+      <div class="page active" data-page="0">
+        <div class="cover">
+          <div style="font-size:7rem">📚</div>
+          <h1>My English Alphabet Book</h1>
+          <p>Learn the alphabet with pictures and grouped pages for Fruits, Vegetables, Animals (both), Birds and Flowers. Use arrows or keyboard to flip pages.</p>
+          <p style="font-size:.98rem;color:var(--muted)">Created for young learners — big images, clear words, and smooth page transitions.</p>
+        </div>
+        <div class="page-footer">Cover</div>
+      </div>
+
+      <!-- Alphabet pages (same 7 pages as before) -->
+      <div class="page" data-page="1">
+        <div class="page-heading">
+          <h2>Page 1</h2>
+          <div class="page-title">A - D</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="letter">A a</div>
+            <div class="illustration">🍎</div>
+            <p class="word">Apple</p>
+          </div>
+          <div class="card">
+            <div class="letter">B b</div>
+            <div class="illustration">🏀</div>
+            <p class="word">Ball</p>
+          </div>
+          <div class="card">
+            <div class="letter">C c</div>
+            <div class="illustration">🐱</div>
+            <p class="word">Cat</p>
+          </div>
+          <div class="card">
+            <div class="letter">D d</div>
+            <div class="illustration">🐶</div>
+            <p class="word">Dog</p>
+          </div>
+        </div>
+        <!-- <div class="page-footer">Page 1 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="2">
+        <div class="page-heading">
+          <h2>Page 2</h2>
+          <div class="page-title">E - H</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="letter">E e</div>
+            <div class="illustration">🐘</div>
+            <p class="word">Elephant</p>
+          </div>
+          <div class="card">
+            <div class="letter">F f</div>
+            <div class="illustration">🐟</div>
+            <p class="word">Fish</p>
+          </div>
+          <div class="card">
+            <div class="letter">G g</div>
+            <div class="illustration">🍇</div>
+            <p class="word">Grapes</p>
+          </div>
+          <div class="card">
+            <div class="letter">H h</div>
+            <div class="illustration">🐔</div>
+            <p class="word">Hen</p>
+          </div>
+        </div>
+        <!-- <div class="page-footer">Page 2 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="3">
+        <div class="page-heading">
+          <h2>Page 3</h2>
+          <div class="page-title">I - L</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="letter">I i</div>
+            <div class="illustration">🍦</div>
+            <p class="word">Ice Cream</p>
+          </div>
+          <div class="card">
+            <div class="letter">J j</div>
+            <div class="illustration">🍬</div>
+            <p class="word">Jelly</p>
+          </div>
+          <div class="card">
+            <div class="letter">K k</div>
+            <div class="illustration">🪁</div>
+            <p class="word">Kite</p>
+          </div>
+          <div class="card">
+            <div class="letter">L l</div>
+            <div class="illustration">🦁</div>
+            <p class="word">Lion</p>
+          </div>
+        </div>
+        <!-- <div class="page-footer">Page 3 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="4">
+        <div class="page-heading">
+          <h2>Page 4</h2>
+          <div class="page-title">M - P</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="letter">M m</div>
+            <div class="illustration">🐒</div>
+            <p class="word">Monkey</p>
+          </div>
+          <div class="card">
+            <div class="letter">N n</div>
+            <div class="illustration">🪺</div>
+            <p class="word">Nest</p>
+          </div>
+          <div class="card">
+            <div class="letter">O o</div>
+            <div class="illustration">🍊</div>
+            <p class="word">Orange</p>
+          </div>
+          <div class="card">
+            <div class="letter">P p</div>
+            <div class="illustration">🦜</div>
+            <p class="word">Parrot</p>
+          </div>
+        </div>
+        <!-- <div class="page-footer">Page 4 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="5">
+        <div class="page-heading">
+          <h2>Page 5</h2>
+          <div class="page-title">Q - T</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="letter">Q q</div>
+            <div class="illustration">👸</div>
+            <p class="word">Queen</p>
+          </div>
+          <div class="card">
+            <div class="letter">R r</div>
+            <div class="illustration">🌹</div>
+            <p class="word">Rose</p>
+          </div>
+          <div class="card">
+            <div class="letter">S s</div>
+            <div class="illustration">☀️</div>
+            <p class="word">Sun</p>
+          </div>
+          <div class="card">
+            <div class="letter">T t</div>
+            <div class="illustration">📞</div>
+            <p class="word">Telephone</p>
+          </div>
+        </div>
+        <!-- <div class="page-footer">Page 5 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="6">
+        <div class="page-heading">
+          <h2>Page 6</h2>
+          <div class="page-title">U - X</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="letter">U u</div>
+            <div class="illustration">☂️</div>
+            <p class="word">Umbrella</p>
+          </div>
+          <div class="card">
+            <div class="letter">V v</div>
+            <div class="illustration">🚐</div>
+            <p class="word">Van</p>
+          </div>
+          <div class="card">
+            <div class="letter">W w</div>
+            <div class="illustration">⌚</div>
+            <p class="word">Watch</p>
+          </div>
+          <div class="card">
+            <div class="letter">X x</div>
+            <div class="illustration">🎶</div>
+            <p class="word">Xylophone</p>
+          </div>
+        </div>
+        <!-- <div class="page-footer">Page 6 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="7">
+        <div class="page-heading">
+          <h2>Page 7</h2>
+          <div class="page-title">Y - Z</div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="letter">Y y</div>
+            <div class="illustration">🛥️</div>
+            <p class="word">Yacht</p>
+          </div>
+          <div class="card">
+            <div class="letter">Z z</div>
+            <div class="illustration">🦓</div>
+            <p class="word">Zebra</p>
+          </div>
+        </div>
+        <!-- <div class="page-footer">Page 7 of 12</div> -->
+      </div>
+
+      <!-- New category pages -->
+
+      <div class="page" data-page="8">
+        <div class="page-heading">
+          <h2>Fruits</h2>
+          <div class="page-title">Common Fruits</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="letter">Apple</div><div class="illustration">🍎</div><p class="word">Apple</p></div>
+          <div class="card"><div class="letter">Banana</div><div class="illustration">🍌</div><p class="word">Banana</p></div>
+          <div class="card"><div class="letter">Orange</div><div class="illustration">🍊</div><p class="word">Orange</p></div>
+          <div class="card"><div class="letter">Grapes</div><div class="illustration">🍇</div><p class="word">Grapes</p></div>
+        </div>
+        <!-- <div class="page-footer">Page 8 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="9">
+        <div class="page-heading">
+          <h2>Vegetables</h2>
+          <div class="page-title">Common Vegetables</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="letter">Carrot</div><div class="illustration">🥕</div><p class="word">Carrot</p></div>
+          <div class="card"><div class="letter">Potato</div><div class="illustration">🥔</div><p class="word">Potato</p></div>
+          <div class="card"><div class="letter">Tomato</div><div class="illustration">🍅</div><p class="word">Tomato</p></div>
+          <div class="card"><div class="letter">Broccoli</div><div class="illustration">🥦</div><p class="word">Broccoli</p></div>
+        </div>
+        <!-- <div class="page-footer">Page 9 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="10">
+        <div class="page-heading">
+          <h2>Animals</h2>
+          <div class="page-title">Domestic & Wild</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="letter">Dog</div><div class="illustration">🐶</div><p class="word">Dog</p></div>
+          <div class="card"><div class="letter">Cat</div><div class="illustration">🐱</div><p class="word">Cat</p></div>
+          <div class="card"><div class="letter">Lion</div><div class="illustration">🦁</div><p class="word">Lion</p></div>
+          <div class="card"><div class="letter">Elephant</div><div class="illustration">🐘</div><p class="word">Elephant</p></div>
+        </div>
+        <!-- <div class="page-footer">Page 10 of 12</div> -->
+      </div>
+
+      <div class="page" data-page="11">
+        <div class="page-heading">
+          <h2>Birds & Flowers</h2>
+          <div class="page-title">Birds and Flowers</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="letter">Parrot</div><div class="illustration">🦜</div><p class="word">Parrot</p></div>
+          <div class="card"><div class="letter">Sparrow</div><div class="illustration">🐦</div><p class="word">Sparrow</p></div>
+          <div class="card"><div class="letter">Rose</div><div class="illustration">🌹</div><p class="word">Rose</p></div>
+          <div class="card"><div class="letter">Sunflower</div><div class="illustration">🌻</div><p class="word">Sunflower</p></div>
+        </div>
+        <!-- <div class="page-footer">Page 11 of 12</div> -->
+      </div>
+
+      <!-- Back cover / credits -->
+      <div class="page" data-page="12">
+        <div class="cover">
+          <div style="font-size:6rem">🎉</div>
+          <h1>Well Done!</h1>
+          <p>You've explored the alphabet and extra category pages for Fruits, Vegetables, Animals, Birds and Flowers. Keep practicing and have fun learning.</p>
+          <p style="font-size:.95rem;color:var(--muted)">Made with care for early learners.</p>
+        </div>
+        <!-- <div class="page-footer">Back Cover</div> -->
+      </div>
+    </div>
+
+    <div class="controls" aria-hidden="false">
+      <button class="btn" id="prevBtn" aria-label="Previous page">⬅️ Prev</button>
+      <div class="page-indicator" id="pageIndicator">Page 0 of 12</div>
+      <button class="btn" id="nextBtn" aria-label="Next page">Next ➡️</button>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const pages = Array.from(document.querySelectorAll('.page'));
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const indicator = document.getElementById('pageIndicator');
+      let current = 0;
+      const TOTAL = pages.length - 1; // last index
+
+      function setButtons(){
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === TOTAL;
+        // show human-friendly number: cover is 0 -> show "Cover" on indicator
+        if(current === 0) indicator.textContent = `Cover (Page 0 of ${TOTAL})`;
+        else if(current === TOTAL) indicator.textContent = `Back Cover (Page ${current} of ${TOTAL})`;
+        else indicator.textContent = `Page ${current} of ${TOTAL}`;
+      }
+
+      function showPage(newIndex){
+        if(newIndex === current) return;
+        const old = pages[current];
+        const next = pages[newIndex];
+
+        // animate old leaving
+        old.classList.remove('enter');
+        old.classList.add('leave');
+        old.classList.remove('active');
+
+        // cleanup after leave
+        const onOldEnd = function(){
+          old.classList.remove('leave');
+          old.removeEventListener('animationend', onOldEnd);
+        };
+        old.addEventListener('animationend', onOldEnd);
+
+        // prepare next page
+        next.classList.add('active','enter');
+        const onNewEnd = function(){
+          next.classList.remove('enter');
+          next.removeEventListener('animationend', onNewEnd);
+        };
+        next.addEventListener('animationend', onNewEnd);
+
+        current = newIndex;
+        setButtons();
+      }
+
+      prevBtn.addEventListener('click', ()=> {
+        if(current>0) showPage(current-1);
+      });
+      nextBtn.addEventListener('click', ()=> {
+        if(current < TOTAL) showPage(current+1);
+      });
+
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'ArrowRight') nextBtn.click();
+        if(e.key === 'ArrowLeft') prevBtn.click();
+      });
+
+      // allow clicking any page to jump (optional)
+      pages.forEach((p, idx) => {
+        p.addEventListener('dblclick', ()=> {
+          // ignore cover and back cover quick jump unless desired
+          if(idx > 0 && idx < TOTAL) {
+            // example: go to cover on dblclick of back cover
+          }
+        });
+      });
+
+      // initial state
+      setButtons();
+    })();
+  </script>
+</body>
+</html>
